@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soccer Tap Logger</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      margin: 1rem;
+    }
+
+    #field {
+      background-image: url('https://media.istockphoto.com/id/981701222/photo/soccer-football-pitch-grass-background.jpg?s=612x612&w=0&k=20&c=QolO9ZJ8eIxpjiZOUYRF7ewiTOghfTD1KIFHPvgppYw=');
+      background-size: contain;
+      background-repeat: no-repeat;
+      width: 90vw;
+      height: 60vw;
+      border: 2px solid #444;
+      position: relative;
+    }
+
+    .marker {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    button {
+      margin: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Soccer Tap Logger</h1>
+  <div id="field"></div>
+  <button onclick="exportCSV()">Export CSV</button>
+
+  <script>
+    const field = document.getElementById('field');
+    const logs = [];
+
+    field.addEventListener('click', (e) => {
+      const rect = field.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const timestamp = new Date().toISOString();
+
+      logs.push({ x: x.toFixed(2), y: y.toFixed(2), timestamp });
+
+      const marker = document.createElement('div');
+      marker.className = 'marker';
+      marker.style.left = `${x}px`;
+      marker.style.top = `${y}px`;
+      field.appendChild(marker);
+    });
+
+    function exportCSV() {
+      if (logs.length === 0) {
+        alert('No data to export.');
+        return;
+      }
+      let csv = 'x,y,timestamp\n';
+      logs.forEach(log => {
+        csv += `${log.x},${log.y},${log.timestamp}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tap_log.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
