@@ -2,165 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Soccer Event Logger</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    #field {
-      width: 90vw;
-      max-width: 600px;
-      aspect-ratio: 2 / 1;
-      background-color: #a2d5a2;
-      border: 2px solid #333;
-      margin: 20px auto;
-      position: relative;
-    }
-    button {
-      margin: 5px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-    #timer {
-      font-size: 24px;
-      margin: 10px 0;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soccer Logger</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>Soccer Event Logger</h1>
-
-  <div>
-    <label for="halfLength">Half Length (minutes):</label>
-    <select id="halfLength">
-      <option value="45">45</option>
-      <option value="40">40</option>
-      <option value="35">35</option>
-      <option value="30">30</option>
-    </select>
-    <button onclick="startHalf()">Start</button>
-  </div>
-
   <div id="timer">00:00</div>
-
-  <div>
-    <button onclick="endHalf()" id="endHalfBtn">Half Time</button>
-    <button onclick="startSecondHalf()" id="secondHalfBtn" disabled>Start 2nd Half</button>
-    <button onclick="endMatch()" id="endMatchBtn">Full Time</button>
-    <button onclick="extraTimePrompt()" id="extraTimeBtn">Extra Time</button>
-    <button onclick="exportCSV()">Export CSV</button>
+  <div class="controls">
+    <button id="startBtn" class="control-button start">Start</button>
+    <button id="stopBtn" class="control-button disabled" disabled>Half Time</button>
+  </div>
+  <div id="field">
+    <img src="https://raw.githubusercontent.com/your-username/your-repo/main/field.png" id="fieldImg" alt="Soccer Field" />
   </div>
 
-  <div id="field" onclick="logEvent(event)"></div>
-
-  <script>
-    let timerInterval, startTime, isRunning = false;
-    let currentPeriod = '1st Half';
-    let logs = [];
-    let selectedHalfLength = 45;
-    let extraTimeCount = 0;
-    let extraTimeTotal = 0;
-    let extraTimeRemaining = [];
-
-    function formatTime(ms) {
-      const totalSec = Math.floor(ms / 1000);
-      const min = Math.floor(totalSec / 60);
-      const sec = totalSec % 60;
-      return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-    }
-
-    function updateTimer() {
-      const now = Date.now();
-      const elapsed = now - startTime;
-      document.getElementById("timer").textContent = formatTime(elapsed);
-    }
-
-    function startHalf() {
-      selectedHalfLength = parseInt(document.getElementById("halfLength").value);
-      startTimer();
-      currentPeriod = '1st Half';
-    }
-
-    function endHalf() {
-      stopTimer();
-      document.getElementById("secondHalfBtn").disabled = false;
-    }
-
-    function startSecondHalf() {
-      startTimer();
-      currentPeriod = '2nd Half';
-    }
-
-    function endMatch() {
-      stopTimer();
-      document.getElementById("extraTimeBtn").disabled = false;
-    }
-
-    function extraTimePrompt() {
-      const periods = prompt("How many extra time periods? (1 or 2)", "1");
-      const minutes = prompt("Duration of each (5, 10, 15...)", "15");
-
-      const n = parseInt(periods);
-      const m = parseInt(minutes);
-
-      if (n > 0 && m > 0) {
-        extraTimeCount = n;
-        extraTimeTotal = n;
-        for (let i = 1; i <= n; i++) {
-          extraTimeRemaining.push(`${i}st Extra Time`);
-        }
-        startNextExtraTime(m);
-      }
-    }
-
-    function startNextExtraTime(minutes) {
-      if (extraTimeRemaining.length === 0) return;
-
-      currentPeriod = extraTimeRemaining.shift();
-      startTimer();
-      document.getElementById("endMatchBtn").textContent = extraTimeRemaining.length > 0 ? `End ${currentPeriod}` : "End Match";
-    }
-
-    function startTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-      startTime = Date.now();
-      isRunning = true;
-      timerInterval = setInterval(updateTimer, 500);
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-      isRunning = false;
-    }
-
-    function logEvent(e) {
-      if (!isRunning) return;
-
-      const field = document.getElementById("field");
-      const rect = field.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
-      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
-      const timestamp = new Date().toISOString();
-      logs.push([timestamp, x, y, currentPeriod]);
-    }
-
-    function exportCSV() {
-      let csv = "Timestamp,X,Y,Period\n";
-      logs.forEach(row => {
-        csv += row.join(",") + "\n";
-      });
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "soccer_events.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
