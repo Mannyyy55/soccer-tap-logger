@@ -2,87 +2,162 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Soccer Tap Logger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Soccer Event Logger</title>
   <style>
     body {
-      margin: 0;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
     }
-
-    h1 {
-      margin: 1rem;
-    }
-
     #field {
-      background-image: url('https://media.istockphoto.com/id/981701222/photo/soccer-football-pitch-grass-background.jpg?s=612x612&w=0&k=20&c=QolO9ZJ8eIxpjiZOUYRF7ewiTOghfTD1KIFHPvgppYw=');
-      background-size: contain;
-      background-repeat: no-repeat;
       width: 90vw;
-      height: 60vw;
-      border: 2px solid #444;
+      max-width: 600px;
+      aspect-ratio: 2 / 1;
+      background-color: #a2d5a2;
+      border: 2px solid #333;
+      margin: 20px auto;
       position: relative;
     }
-
-    .marker {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background-color: red;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-    }
-
     button {
-      margin: 1rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #timer {
+      font-size: 24px;
+      margin: 10px 0;
     }
   </style>
 </head>
 <body>
-  <h1>Soccer Tap Logger</h1>
-  <div id="field"></div>
-  <button onclick="exportCSV()">Export CSV</button>
+  <h1>Soccer Event Logger</h1>
+
+  <div>
+    <label for="halfLength">Half Length (minutes):</label>
+    <select id="halfLength">
+      <option value="45">45</option>
+      <option value="40">40</option>
+      <option value="35">35</option>
+      <option value="30">30</option>
+    </select>
+    <button onclick="startHalf()">Start</button>
+  </div>
+
+  <div id="timer">00:00</div>
+
+  <div>
+    <button onclick="endHalf()" id="endHalfBtn">Half Time</button>
+    <button onclick="startSecondHalf()" id="secondHalfBtn" disabled>Start 2nd Half</button>
+    <button onclick="endMatch()" id="endMatchBtn">Full Time</button>
+    <button onclick="extraTimePrompt()" id="extraTimeBtn">Extra Time</button>
+    <button onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <div id="field" onclick="logEvent(event)"></div>
 
   <script>
-    const field = document.getElementById('field');
-    const logs = [];
+    let timerInterval, startTime, isRunning = false;
+    let currentPeriod = '1st Half';
+    let logs = [];
+    let selectedHalfLength = 45;
+    let extraTimeCount = 0;
+    let extraTimeTotal = 0;
+    let extraTimeRemaining = [];
 
-    field.addEventListener('click', (e) => {
+    function formatTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+      const now = Date.now();
+      const elapsed = now - startTime;
+      document.getElementById("timer").textContent = formatTime(elapsed);
+    }
+
+    function startHalf() {
+      selectedHalfLength = parseInt(document.getElementById("halfLength").value);
+      startTimer();
+      currentPeriod = '1st Half';
+    }
+
+    function endHalf() {
+      stopTimer();
+      document.getElementById("secondHalfBtn").disabled = false;
+    }
+
+    function startSecondHalf() {
+      startTimer();
+      currentPeriod = '2nd Half';
+    }
+
+    function endMatch() {
+      stopTimer();
+      document.getElementById("extraTimeBtn").disabled = false;
+    }
+
+    function extraTimePrompt() {
+      const periods = prompt("How many extra time periods? (1 or 2)", "1");
+      const minutes = prompt("Duration of each (5, 10, 15...)", "15");
+
+      const n = parseInt(periods);
+      const m = parseInt(minutes);
+
+      if (n > 0 && m > 0) {
+        extraTimeCount = n;
+        extraTimeTotal = n;
+        for (let i = 1; i <= n; i++) {
+          extraTimeRemaining.push(`${i}st Extra Time`);
+        }
+        startNextExtraTime(m);
+      }
+    }
+
+    function startNextExtraTime(minutes) {
+      if (extraTimeRemaining.length === 0) return;
+
+      currentPeriod = extraTimeRemaining.shift();
+      startTimer();
+      document.getElementById("endMatchBtn").textContent = extraTimeRemaining.length > 0 ? `End ${currentPeriod}` : "End Match";
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      startTime = Date.now();
+      isRunning = true;
+      timerInterval = setInterval(updateTimer, 500);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+    }
+
+    function logEvent(e) {
+      if (!isRunning) return;
+
+      const field = document.getElementById("field");
       const rect = field.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
+      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
       const timestamp = new Date().toISOString();
-
-      logs.push({ x: x.toFixed(2), y: y.toFixed(2), timestamp });
-
-      const marker = document.createElement('div');
-      marker.className = 'marker';
-      marker.style.left = `${x}px`;
-      marker.style.top = `${y}px`;
-      field.appendChild(marker);
-    });
+      logs.push([timestamp, x, y, currentPeriod]);
+    }
 
     function exportCSV() {
-      if (logs.length === 0) {
-        alert('No data to export.');
-        return;
-      }
-      let csv = 'x,y,timestamp\n';
-      logs.forEach(log => {
-        csv += `${log.x},${log.y},${log.timestamp}\n`;
+      let csv = "Timestamp,X,Y,Period\n";
+      logs.forEach(row => {
+        csv += row.join(",") + "\n";
       });
 
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'tap_log.csv';
+      a.download = "soccer_events.csv";
       a.click();
       URL.revokeObjectURL(url);
     }
