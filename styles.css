@@ -1,1 +1,61 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #f4f4f4;
+}
+
+#field {
+  position: relative;
+  display: inline-block;
+  margin: 20px 0;
+}
+
+#field img {
+  max-width: 100%;
+  height: auto;
+  cursor: crosshair;
+}
+
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.controls {
+  margin: 10px auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.control-button {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  font-size: 14px;
+  margin: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.start {
+  background-color: green;
+}
+
+.disabled {
+  background-color: grey;
+  cursor: not-allowed;
+}
+
+#timer {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
 
