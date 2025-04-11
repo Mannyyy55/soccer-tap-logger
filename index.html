@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jogo Event Logger v5.6.1</title>
+  <title>Jogo Event Logger v5.6.2</title>
   <style>
     body {
       font-family: Helvetica, Arial, sans-serif;
@@ -22,9 +22,6 @@
       height: auto;
       max-width: 100%;
       cursor: crosshair;
-      position: absolute;
-      top: 0;
-      left: 0;
     }
 
     .dot {
@@ -68,13 +65,19 @@
       cursor: pointer;
     }
 
+    /* Active buttons (Download CSV and Download Image) will be grey */
+    #downloadBtn:enabled, #downloadImageBtn:enabled {
+      background-color: grey;
+      color: white;
+    }
+
     #downloadImageBtn {
       margin-left: 10px; /* Add space between Download CSV and Download Image */
     }
   </style>
 </head>
 <body>
-  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.1</h1>
+  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.2</h1>
 
   <div id="timer">00:00</div>
 
