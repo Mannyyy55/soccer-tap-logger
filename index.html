@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jogo Event Logger v5.6.5b</title>
+  <title>Jogo Event Logger v5.6.6b</title>
   <style>
     body {
       font-family: Helvetica, Arial, sans-serif;
@@ -77,7 +77,7 @@
   </style>
 </head>
 <body>
-  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.5b</h1>
+  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.6b</h1>
 
   <div id="timer">00:00</div>
 
@@ -104,7 +104,7 @@
   </div>
 
   <div id="field">
-    <canvas id="fieldCanvas" width="1000" height="560"></canvas>
+    <canvas id="fieldCanvas" width="1000" height="560"></canvas> <!-- Canvas dimensions are set here -->
     <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field"/>
   </div>
 
@@ -122,6 +122,12 @@
     const downloadImageBtn = document.getElementById("downloadImageBtn"); // New download image button
     const fieldCanvas = document.getElementById("fieldCanvas");
     const ctx = fieldCanvas.getContext("2d");
+
+    // Dynamically adjust canvas size based on the image size
+    fieldImg.onload = () => {
+      fieldCanvas.width = fieldImg.width;
+      fieldCanvas.height = fieldImg.height;
+    };
 
     let startTime;
     let timerInterval;
