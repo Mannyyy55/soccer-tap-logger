@@ -2,19 +2,22 @@ body {
   font-family: Helvetica, sans-serif;
   text-align: center;
   background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
 }
 
 #field {
-  position: relative;
   display: flex;
   justify-content: center;
+  align-items: center;
   margin: 20px 0;
+  position: relative;
 }
 
 #field img {
-  width: 100%;
-  max-width: 1000px;
+  width: 1000px;
   height: auto;
+  max-width: 100%;
   cursor: crosshair;
 }
 
@@ -33,43 +36,27 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
 }
 
 .control-button {
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   border: none;
   color: white;
-  font-size: 13px;
+  font-size: 14px;
+  margin: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
-  padding: 10px;
-  white-space: normal;
-}
-
-.start {
   background-color: green;
 }
 
-.download {
-  background-color: #1e90ff;
-}
-
-.disabled {
+.control-button.disabled {
   background-color: grey;
   cursor: not-allowed;
 }
 
 #timer {
   font-size: 24px;
-  margin: 10px 0;
-}
-
-select {
-  font-family: Helvetica, sans-serif;
-  padding: 6px;
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin: 10px;
 }
