@@ -5,6 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Soccer Logger</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+
+    #field {
+      position: relative;
+      display: inline-block;
+      margin: 20px 0;
+    }
+
+    #field img {
+      width: 1000px;
+      height: auto;
+      max-width: 100%;
+      cursor: crosshair;
+    }
+
+    .dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .controls {
+      margin: 10px auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .control-button {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 14px;
+      margin: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .start {
+      background-color: green;
+    }
+
+    .disabled {
+      background-color: grey;
+      cursor: not-allowed;
+    }
+
+    #timer {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
   <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC</h1>
@@ -17,6 +80,62 @@
     <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field" />
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const timerDisplay = document.getElementById("timer");
+    const field = document.getElementById("field");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const fieldImg = document.getElementById("fieldImg");
+
+    let startTime;
+    let timerInterval;
+    let isRunning = false;
+
+    function formatTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${minutes}:${seconds}`;
+    }
+
+    function updateTimer() {
+      const now = Date.now();
+      const elapsed = now - startTime;
+      timerDisplay.textContent = formatTime(elapsed);
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (!isRunning) {
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 500);
+        isRunning = true;
+        stopBtn.disabled = false;
+        stopBtn.classList.remove("disabled");
+        startBtn.classList.add("disabled");
+        startBtn.disabled = true;
+      }
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+        stopBtn.classList.add("disabled");
+        stopBtn.disabled = true;
+      }
+    });
+
+    fieldImg.addEventListener("click", (e) => {
+      if (!isRunning) return;
+      const rect = fieldImg.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
+      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      dot.style.left = `${x * 100}%`;
+      dot.style.top = `${y * 100}%`;
+      field.appendChild(dot);
+    });
+  </script>
 </body>
 </html>
