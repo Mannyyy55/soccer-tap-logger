@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jogo Event Logger v5.6.4</title>
+  <title>Jogo Event Logger v5.6.5</title>
   <style>
     body {
       font-family: Helvetica, Arial, sans-serif;
@@ -19,23 +19,20 @@
 
     #fieldImgWrapper {
       position: relative;
-      display: inline-block;
+      width: 1000px;
+      max-width: 100%;
     }
 
-    #field img {
-      width: 1000px;
+    #fieldImg {
+      width: 100%;
       height: auto;
-      max-width: 100%;
       display: block;
     }
 
-    .dot {
+    canvas {
       position: absolute;
-      width: 10px;
-      height: 10px;
-      background-color: red;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
+      left: 0;
+      top: 0;
       pointer-events: none;
     }
 
@@ -60,6 +57,7 @@
 
     .start { background-color: green; }
     .disabled { background-color: grey; cursor: not-allowed; }
+
     #timer { font-size: 24px; margin-bottom: 10px; }
 
     select, #downloadBtn, #downloadImageBtn {
@@ -81,7 +79,7 @@
   </style>
 </head>
 <body>
-  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.4</h1>
+  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.5</h1>
 
   <div id="timer">00:00</div>
 
@@ -109,7 +107,7 @@
 
   <div id="field">
     <div id="fieldImgWrapper">
-      <canvas id="fieldCanvas" width="1000" height="560" style="position: absolute; top: 0; left: 0;"></canvas>
+      <canvas id="fieldCanvas" width="1000" height="560"></canvas>
       <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field"/>
     </div>
   </div>
@@ -126,21 +124,26 @@
     const downloadImageBtn = document.getElementById("downloadImageBtn");
     const fieldCanvas = document.getElementById("fieldCanvas");
     const ctx = fieldCanvas.getContext("2d");
-    const fieldImg = document.getElementById("fieldImg");
-    const fieldWrapper = document.getElementById("fieldImgWrapper");
+    const wrapper = document.getElementById("fieldImgWrapper");
 
-    let startTime, timerInterval;
+    let startTime;
+    let timerInterval;
     let isRunning = false;
     let isSecondHalf = false;
+    let inExtraTime = false;
     let selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
     let logData = [];
-    let inExtraTime = false;
 
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
       const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
       const seconds = String(totalSeconds % 60).padStart(2, "0");
       return `${minutes}:${seconds}`;
+    }
+
+    function parseTime(timeString) {
+      const [min, sec] = timeString.split(":").map(Number);
+      return (min * 60 + sec) * 1000;
     }
 
     function updateTimer() {
@@ -220,30 +223,23 @@
       }
     });
 
-    function parseTime(timeString) {
-      const [min, sec] = timeString.split(":").map(Number);
-      return (min * 60 + sec) * 1000;
-    }
+    halfDurationSelect.addEventListener("change", () => {
+      selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
+    });
 
-    fieldImg.addEventListener("click", (e) => {
+    wrapper.addEventListener("click", (e) => {
       if (!isRunning) return;
-
-      const rect = fieldImg.getBoundingClientRect();
+      const rect = wrapper.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
       const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
-
-      // Add dot relative to image wrapper
-      const dot = document.createElement("div");
-      dot.className = "dot";
-      dot.style.left = `${x * 100}%`;
-      dot.style.top = `${y * 100}%`;
-      fieldWrapper.appendChild(dot);
 
       const now = Date.now();
       const elapsed = now - startTime;
       const phase = inExtraTime ? "Extra Time" : isSecondHalf ? "2nd Half" : "1st Half";
+
       logData.push({ time: formatTime(elapsed), x, y, phase });
 
+      // Draw red dot on canvas
       ctx.beginPath();
       ctx.arc(x * fieldCanvas.width, y * fieldCanvas.height, 5, 0, 2 * Math.PI);
       ctx.fillStyle = "red";
@@ -273,10 +269,6 @@
       link.href = image;
       link.download = "field_with_dots.png";
       link.click();
-    });
-
-    halfDurationSelect.addEventListener("change", () => {
-      selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
     });
   </script>
 </body>
