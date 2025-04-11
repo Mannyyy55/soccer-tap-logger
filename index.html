@@ -5,34 +5,177 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Soccer Logger</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Helvetica, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+
+    #field {
+      position: center;
+      display: inline-block;
+      margin: 20px 0;
+    }
+
+    #field img {
+      width: 1000px;
+      height: auto;
+      max-width: 100%;
+      cursor: crosshair;
+    }
+
+    .dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .controls {
+      margin: 10px auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .control-button {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 14px;
+      margin: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .start {
+      background-color: green;
+    }
+
+    .disabled {
+      background-color: grey;
+      cursor: not-allowed;
+    }
+
+    #timer {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
   <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC</h1>
-  <div>
-    <label for="halfDuration">Half Duration (min): </label>
-    <select id="halfDuration">
-      <option value="20">20</option>
-      <option value="25">25</option>
-      <option value="30">30</option>
-      <option value="35">35</option>
-      <option value="40">40</option>
-      <option value="45" selected>45</option>
-    </select>
-  </div>
   <div id="timer">00:00</div>
   <div class="controls">
     <button id="startBtn" class="control-button start">Start</button>
-    <button id="halfTimeBtn" class="control-button disabled" disabled>Half Time</button>
-    <button id="secondHalfBtn" class="control-button disabled" disabled>2nd Half</button>
-    <button id="extraTimeBtn" class="control-button disabled" disabled>Extra Time</button>
+    <button id="stopBtn" class="control-button disabled" disabled>Half Time</button>
+    <button id="secondHalfBtn" class="control-button disabled" disabled>Start 2nd Half</button>
     <button id="fullTimeBtn" class="control-button disabled" disabled>Full Time</button>
-    <button id="downloadBtn" class="control-button">Download CSV</button>
+    <button id="extraTimeBtn" class="control-button disabled" disabled>Extra Time</button>
   </div>
-
   <div id="field">
     <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field" />
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const timerDisplay = document.getElementById("timer");
+    const field = document.getElementById("field");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const secondHalfBtn = document.getElementById("secondHalfBtn");
+    const fullTimeBtn = document.getElementById("fullTimeBtn");
+    const extraTimeBtn = document.getElementById("extraTimeBtn");
+    const fieldImg = document.getElementById("fieldImg");
+    const halfDurationDropdown = document.getElementById("halfDuration");
+
+    let startTime;
+    let timerInterval;
+    let isRunning = false;
+    let firstHalfDuration = 0;
+
+    function formatTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${minutes}:${seconds}`;
+    }
+
+    function updateTimer() {
+      const now = Date.now();
+      const elapsed = now - startTime;
+      timerDisplay.textContent = formatTime(elapsed);
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (!isRunning) {
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 500);
+        isRunning = true;
+        stopBtn.disabled = false;
+        stopBtn.classList.remove("disabled");
+        startBtn.classList.add("disabled");
+        startBtn.disabled = true;
+
+        // Store the selected half duration when the game starts
+        firstHalfDuration = parseInt(halfDurationDropdown.value, 10);
+      }
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+        secondHalfBtn.disabled = false;
+        secondHalfBtn.classList.remove("disabled");
+        stopBtn.classList.add("disabled");
+        stopBtn.disabled = true;
+      }
+    });
+
+    secondHalfBtn.addEventListener("click", () => {
+      if (!isRunning) {
+        startTime = Date.now() + (firstHalfDuration * 60 * 1000); // Start second half from selected minute
+        timerInterval = setInterval(updateTimer, 500);
+        isRunning = true;
+        secondHalfBtn.classList.add("disabled");
+        secondHalfBtn.disabled = true;
+      }
+    });
+
+    fullTimeBtn.addEventListener("click", () => {
+      clearInterval(timerInterval);
+      isRunning = false;
+      fullTimeBtn.textContent = "Confirm End";
+    });
+
+    extraTimeBtn.addEventListener("click", () => {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+      }
+      extraTimeBtn.classList.add("disabled");
+      extraTimeBtn.disabled = true;
+    });
+
+    fieldImg.addEventListener("click", (e) => {
+      if (!isRunning) return;
+      const rect = fieldImg.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
+      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      dot.style.left = `${x * 100}%`;
+      dot.style.top = `${y * 100}%`;
+      field.appendChild(dot);
+
+      // Log event to CSV or data store here
+    });
+  </script>
 </body>
 </html>
