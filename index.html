@@ -4,18 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Soccer Logger</title>
+  <link rel="stylesheet" href="style.css" />
   <style>
     body {
-      font-family: Helvetica, Arial, sans-serif;
+      font-family: Helvetica, sans-serif;
       text-align: center;
       background-color: #f4f4f4;
     }
 
     #field {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
+      position: center;
+      display: inline-block;
       margin: 20px 0;
     }
 
@@ -68,21 +67,11 @@
       font-size: 24px;
       margin-bottom: 10px;
     }
-
-    select {
-      font-size: 14px;
-      padding: 5px;
-      margin: 10px;
-      border-radius: 5px;
-    }
   </style>
 </head>
 <body>
   <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC</h1>
-  
   <div id="timer">00:00</div>
-
-  <!-- Controls -->
   <div class="controls">
     <button id="startBtn" class="control-button start">Start</button>
     <button id="stopBtn" class="control-button disabled" disabled>Half Time</button>
@@ -90,19 +79,6 @@
     <button id="fullTimeBtn" class="control-button disabled" disabled>Full Time</button>
     <button id="extraTimeBtn" class="control-button disabled" disabled>Extra Time</button>
   </div>
-
-  <div>
-    <label for="halfDuration">Select Half Duration:</label>
-    <select id="halfDuration">
-      <option value="20">20 min</option>
-      <option value="25">25 min</option>
-      <option value="30">30 min</option>
-      <option value="35">35 min</option>
-      <option value="40">40 min</option>
-      <option value="45" selected>45 min</option>
-    </select>
-  </div>
-
   <div id="field">
     <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field" />
   </div>
@@ -116,13 +92,12 @@
     const fullTimeBtn = document.getElementById("fullTimeBtn");
     const extraTimeBtn = document.getElementById("extraTimeBtn");
     const fieldImg = document.getElementById("fieldImg");
-    const halfDurationSelect = document.getElementById("halfDuration");
+    const halfDurationDropdown = document.getElementById("halfDuration");
 
     let startTime;
     let timerInterval;
     let isRunning = false;
-    let isSecondHalf = false;
-    let selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000; // in milliseconds
+    let firstHalfDuration = 0;
 
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
@@ -146,8 +121,9 @@
         stopBtn.classList.remove("disabled");
         startBtn.classList.add("disabled");
         startBtn.disabled = true;
-        secondHalfBtn.disabled = false;
-        secondHalfBtn.classList.remove("disabled");
+
+        // Store the selected half duration when the game starts
+        firstHalfDuration = parseInt(halfDurationDropdown.value, 10);
       }
     });
 
@@ -155,40 +131,36 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
+        secondHalfBtn.disabled = false;
+        secondHalfBtn.classList.remove("disabled");
         stopBtn.classList.add("disabled");
         stopBtn.disabled = true;
       }
     });
 
     secondHalfBtn.addEventListener("click", () => {
-      if (!isRunning && !isSecondHalf) {
-        isSecondHalf = true;
-        const secondHalfStartTime = Date.now() - selectedHalfDuration; // Start second half from the selected duration
-        startTime = secondHalfStartTime;
+      if (!isRunning) {
+        startTime = Date.now() + (firstHalfDuration * 60 * 1000); // Start second half from selected minute
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
         secondHalfBtn.classList.add("disabled");
         secondHalfBtn.disabled = true;
-        fullTimeBtn.disabled = false;
-        fullTimeBtn.classList.remove("disabled");
       }
     });
 
     fullTimeBtn.addEventListener("click", () => {
-      if (isRunning) {
-        clearInterval(timerInterval);
-        isRunning = false;
-        fullTimeBtn.classList.add("disabled");
-        fullTimeBtn.disabled = true;
-      }
+      clearInterval(timerInterval);
+      isRunning = false;
+      fullTimeBtn.textContent = "Confirm End";
     });
 
     extraTimeBtn.addEventListener("click", () => {
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
-        // Additional functionality for Extra Time can be added here
       }
+      extraTimeBtn.classList.add("disabled");
+      extraTimeBtn.disabled = true;
     });
 
     fieldImg.addEventListener("click", (e) => {
@@ -201,18 +173,8 @@
       dot.style.left = `${x * 100}%`;
       dot.style.top = `${y * 100}%`;
       field.appendChild(dot);
-    });
 
-    halfDurationSelect.addEventListener("change", () => {
-      selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
-      if (isRunning) {
-        clearInterval(timerInterval);
-        isRunning = false;
-        startBtn.classList.remove("disabled");
-        startBtn.disabled = false;
-        stopBtn.classList.add("disabled");
-        stopBtn.disabled = true;
-      }
+      // Log event to CSV or data store here
     });
   </script>
 </body>
