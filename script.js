@@ -1,17 +1,19 @@
 const timerDisplay = document.getElementById("timer");
 const field = document.getElementById("field");
-const startBtn = document.getElementById("startBtn");
-const halfTimeBtn = document.getElementById("halfTimeBtn");
-const fullTimeBtn = document.getElementById("fullTimeBtn");
-const extraTimeBtn = document.getElementById("extraTimeBtn");
-const endMatchBtn = document.getElementById("endMatchBtn");
 const fieldImg = document.getElementById("fieldImg");
 
-let startTime;
-let timerInterval;
+const startBtn = document.getElementById("startBtn");
+const halfBtn = document.getElementById("halfBtn");
+const secondHalfBtn = document.getElementById("secondHalfBtn");
+const extraTimeBtn = document.getElementById("extraTimeBtn");
+const fullTimeBtn = document.getElementById("fullTimeBtn");
+const downloadCsvBtn = document.getElementById("downloadCsvBtn");
+const halfDurationSelect = document.getElementById("halfDuration");
+
+let startTime, timerInterval;
 let isRunning = false;
-let isFirstHalf = true;
-let isExtraTime = false;
+let csvData = [["Time", "X", "Y", "Phase"]];
+let currentPhase = "1st Half";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -26,49 +28,52 @@ function updateTimer() {
   timerDisplay.textContent = formatTime(elapsed);
 }
 
+function startClock(phaseName) {
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer, 500);
+  isRunning = true;
+  currentPhase = phaseName;
+}
+
+function stopClock() {
+  clearInterval(timerInterval);
+  isRunning = false;
+}
+
+function toggleButtons(disableList = [], enableList = []) {
+  disableList.forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add("disabled");
+  });
+  enableList.forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove("disabled");
+  });
+}
+
 startBtn.addEventListener("click", () => {
-  if (!isRunning) {
-    startTime = Date.now();
-    timerInterval = setInterval(updateTimer, 500);
-    isRunning = true;
-    startBtn.disabled = true;
-    halfTimeBtn.disabled = false;
-    halfTimeBtn.classList.remove("disabled");
-  }
+  startClock("1st Half");
+  toggleButtons([startBtn], [halfBtn]);
 });
 
-halfTimeBtn.addEventListener("click", () => {
-  if (isRunning && isFirstHalf) {
-    clearInterval(timerInterval);
-    isRunning = false;
-    halfTimeBtn.disabled = true;
-    fullTimeBtn.disabled = false;
-    fullTimeBtn.classList.remove("disabled");
-    isFirstHalf = false;
-  }
+halfBtn.addEventListener("click", () => {
+  stopClock();
+  toggleButtons([halfBtn], [secondHalfBtn]);
 });
 
-fullTimeBtn.addEventListener("click", () => {
-  if (!isRunning && !isFirstHalf) {
-    fullTimeBtn.textContent = "Confirm End";
-    extraTimeBtn.disabled = false;
-    extraTimeBtn.classList.remove("disabled");
-  }
+secondHalfBtn.addEventListener("click", () => {
+  startClock("2nd Half");
+  toggleButtons([secondHalfBtn], [fullTimeBtn, extraTimeBtn]);
 });
 
 extraTimeBtn.addEventListener("click", () => {
-  if (!isRunning && !isFirstHalf && fullTimeBtn.textContent === "Confirm End") {
-    isExtraTime = true;
-    fullTimeBtn.textContent = "Full Time";
-    extraTimeBtn.disabled = true;
-    startBtn.disabled = false;
-    startBtn.classList.remove("disabled");
-  }
+  startClock("Extra Time");
+  toggleButtons([extraTimeBtn], [fullTimeBtn]);
 });
 
-endMatchBtn.addEventListener("click", () => {
-  alert("Match has ended!");
-  window.location.reload();
+fullTimeBtn.addEventListener("click", () => {
+  stopClock();
+  toggleButtons([fullTimeBtn], []);
 });
 
 fieldImg.addEventListener("click", (e) => {
@@ -81,4 +86,18 @@ fieldImg.addEventListener("click", (e) => {
   dot.style.left = `${x * 100}%`;
   dot.style.top = `${y * 100}%`;
   field.appendChild(dot);
+
+  const timestamp = timerDisplay.textContent;
+  csvData.push([timestamp, x, y, currentPhase]);
+});
+
+downloadCsvBtn.addEventListener("click", () => {
+  let csvContent = "data:text/csv;charset=utf-8," + csvData.map(e => e.join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "soccer_log.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 });
