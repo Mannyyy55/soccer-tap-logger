@@ -55,7 +55,6 @@
 
     .start { background-color: green; }
     .disabled { background-color: grey; cursor: not-allowed; }
-    .active { background-color: green !important; }
     #timer { font-size: 24px; margin-bottom: 10px; }
 
     select, #downloadBtn {
@@ -115,8 +114,7 @@
     let isSecondHalf = false;
     let selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
     let logData = [];
-    let currentPhase = "1st Half";
-    let elapsedExtraTime = 0;
+    let inExtraTime = false;
 
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
@@ -131,11 +129,16 @@
       timerDisplay.textContent = formatTime(elapsed);
     }
 
-    function disableButtons() {
-      [startBtn, stopBtn, secondHalfBtn, fullTimeBtn, extraTimeBtn].forEach(btn => {
-        btn.disabled = true;
-        btn.classList.add("disabled");
-        btn.classList.remove("active");
+    function setButtonStates(states) {
+      const buttons = [startBtn, stopBtn, secondHalfBtn, fullTimeBtn, extraTimeBtn];
+      buttons.forEach(btn => {
+        btn.disabled = !states.includes(btn.id);
+        btn.classList.toggle("disabled", !states.includes(btn.id));
+        btn.classList.remove("start");
+      });
+      states.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.add("start");
       });
     }
 
@@ -144,14 +147,7 @@
         startTime = Date.now();
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
-        currentPhase = "1st Half";
-        disableButtons();
-        stopBtn.disabled = false;
-        stopBtn.classList.remove("disabled");
-        stopBtn.classList.add("active");
-        fullTimeBtn.disabled = false;
-        fullTimeBtn.classList.remove("disabled");
-        fullTimeBtn.classList.add("active");
+        setButtonStates(["stopBtn", "fullTimeBtn", "downloadBtn"]);
       }
     });
 
@@ -159,10 +155,7 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
-        disableButtons();
-        secondHalfBtn.disabled = false;
-        secondHalfBtn.classList.remove("disabled");
-        secondHalfBtn.classList.add("active");
+        setButtonStates(["secondHalfBtn", "downloadBtn"]);
       }
     });
 
@@ -172,11 +165,7 @@
         startTime = Date.now() - selectedHalfDuration;
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
-        currentPhase = "2nd Half";
-        disableButtons();
-        fullTimeBtn.disabled = false;
-        fullTimeBtn.classList.remove("disabled");
-        fullTimeBtn.classList.add("active");
+        setButtonStates(["fullTimeBtn", "downloadBtn"]);
       }
     });
 
@@ -184,36 +173,38 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
+        setButtonStates(["extraTimeBtn", "downloadBtn"]);
       }
-      disableButtons();
-      extraTimeBtn.disabled = false;
-      extraTimeBtn.classList.remove("disabled");
-      extraTimeBtn.classList.add("active");
     });
 
     extraTimeBtn.addEventListener("click", () => {
-      if (extraTimeBtn.textContent === "Extra Time" || extraTimeBtn.textContent === "Resume") {
-        if (!isRunning) {
-          startTime = Date.now() - elapsedExtraTime;
+      if (!inExtraTime) {
+        inExtraTime = true;
+        startTime = Date.now() - selectedHalfDuration * 2;
+        timerInterval = setInterval(updateTimer, 500);
+        isRunning = true;
+        extraTimeBtn.textContent = "Pause";
+        setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn"]);
+      } else {
+        if (isRunning) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          extraTimeBtn.textContent = "Resume";
+          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn"]);
+        } else {
+          startTime = Date.now() - parseTime(timerDisplay.textContent);
           timerInterval = setInterval(updateTimer, 500);
           isRunning = true;
+          extraTimeBtn.textContent = "Pause";
+          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn"]);
         }
-        currentPhase = "Extra Time";
-        extraTimeBtn.textContent = "Pause";
-        disableButtons();
-        extraTimeBtn.disabled = false;
-        extraTimeBtn.classList.remove("disabled");
-        extraTimeBtn.classList.add("active");
-        fullTimeBtn.disabled = false;
-        fullTimeBtn.classList.remove("disabled");
-        fullTimeBtn.classList.add("active");
-      } else if (extraTimeBtn.textContent === "Pause") {
-        clearInterval(timerInterval);
-        isRunning = false;
-        elapsedExtraTime = Date.now() - startTime;
-        extraTimeBtn.textContent = "Resume";
       }
     });
+
+    function parseTime(timeString) {
+      const [min, sec] = timeString.split(":").map(Number);
+      return (parseInt(min) * 60 + parseInt(sec)) * 1000;
+    }
 
     fieldImg.addEventListener("click", (e) => {
       if (!isRunning) return;
@@ -228,7 +219,8 @@
 
       const now = Date.now();
       const elapsed = now - startTime;
-      logData.push({ time: formatTime(elapsed), x, y, phase: currentPhase });
+      const phase = inExtraTime ? "Extra Time" : isSecondHalf ? "2nd Half" : "1st Half";
+      logData.push({ time: formatTime(elapsed), x, y, phase });
     });
 
     halfDurationSelect.addEventListener("change", () => {
