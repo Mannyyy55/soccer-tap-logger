@@ -3,32 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Soccer Tap Logger v5.6.6</title>
+  <title>Jogo Event Logger v5.6.5b</title>
   <style>
     body {
-      font-family: Helvetica, sans-serif;
+      font-family: Helvetica, Arial, sans-serif;
       text-align: center;
       background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
     }
+
     #field {
       position: relative;
+      margin: 20px auto;
       display: inline-block;
-      margin-top: 20px;
     }
+
     #field img {
-      width: 100%;
-      max-width: 800px;
+      width: 1000px;
       height: auto;
-      display: block;
+      max-width: 100%;
+      cursor: crosshair;
     }
-    #fieldCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
+
     .dot {
       position: absolute;
       width: 10px;
@@ -36,53 +31,81 @@
       background-color: red;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      z-index: 10;
+      pointer-events: none;
     }
+
     .controls {
-      margin: 20px;
+      margin: 10px auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
     }
-    button, select {
-      padding: 10px 15px;
+
+    .control-button {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 14px;
       margin: 5px;
-      font-size: 16px;
-      font-family: Helvetica, sans-serif;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .start { background-color: green; }
+    .disabled { background-color: grey; cursor: not-allowed; }
+    #timer { font-size: 24px; margin-bottom: 10px; }
+
+    select, #downloadBtn, #downloadImageBtn {
+      font-size: 14px;
+      padding: 5px 10px;
+      margin: 10px;
+      border-radius: 5px;
       cursor: pointer;
     }
-    button.disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-    .start {
-      background-color: #4caf50;
+
+    /* Active buttons (Download CSV and Download Image) will be grey */
+    #downloadBtn:enabled, #downloadImageBtn:enabled {
+      background-color: grey;
       color: white;
+    }
+
+    #downloadImageBtn {
+      margin-left: 10px; /* Add space between Download CSV and Download Image */
     }
   </style>
 </head>
 <body>
+  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.5b</h1>
 
-  <h1>Soccer Tap Logger v5.6.6</h1>
+  <div id="timer">00:00</div>
 
   <div class="controls">
-    <span id="timer">00:00</span><br/>
-    <button id="startBtn">Start</button>
-    <button id="stopBtn" class="disabled" disabled>Pause</button>
-    <button id="secondHalfBtn" class="disabled" disabled>2nd Half</button>
-    <button id="fullTimeBtn" class="disabled" disabled>Full Time</button>
-    <button id="extraTimeBtn" class="disabled" disabled>Extra Time</button><br/>
-    Half Duration:
+    <button id="startBtn" class="control-button start">Start</button>
+    <button id="stopBtn" class="control-button disabled" disabled>Half Time</button>
+    <button id="secondHalfBtn" class="control-button disabled" disabled>Start 2nd Half</button>
+    <button id="fullTimeBtn" class="control-button disabled" disabled>Full Time</button>
+    <button id="extraTimeBtn" class="control-button disabled" disabled>Extra Time</button>
+  </div>
+
+  <div>
+    <label for="halfDuration">Select Half Duration:</label>
     <select id="halfDuration">
-      <option value="45">45 min</option>
-      <option value="40">40 min</option>
-      <option value="35">35 min</option>
+      <option value="20">20 min</option>
+      <option value="25">25 min</option>
       <option value="30">30 min</option>
-    </select><br/>
-    <button id="downloadBtn" class="disabled" disabled>Download CSV</button>
-    <button id="downloadImageBtn" class="disabled" disabled>Download Image</button>
+      <option value="35">35 min</option>
+      <option value="40">40 min</option>
+      <option value="45" selected>45 min</option>
+    </select>
+    <button id="downloadBtn">Download CSV</button>
+    <button id="downloadImageBtn">Download Image</button> <!-- New button for saving the image -->
   </div>
 
   <div id="field">
-    <img id="fieldImg" src="field.png" alt="Soccer Field"/>
-    <canvas id="fieldCanvas"></canvas>
+    <canvas id="fieldCanvas" width="1000" height="560"></canvas>
+    <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field"/>
   </div>
 
   <script>
@@ -96,7 +119,7 @@
     const fieldImg = document.getElementById("fieldImg");
     const halfDurationSelect = document.getElementById("halfDuration");
     const downloadBtn = document.getElementById("downloadBtn");
-    const downloadImageBtn = document.getElementById("downloadImageBtn");
+    const downloadImageBtn = document.getElementById("downloadImageBtn"); // New download image button
     const fieldCanvas = document.getElementById("fieldCanvas");
     const ctx = fieldCanvas.getContext("2d");
 
@@ -198,43 +221,30 @@
       return (parseInt(min) * 60 + parseInt(sec)) * 1000;
     }
 
-    fieldImg.addEventListener("load", () => {
-      fieldCanvas.width = fieldImg.offsetWidth;
-      fieldCanvas.height = fieldImg.offsetHeight;
-      fieldCanvas.style.position = "absolute";
-      fieldCanvas.style.left = fieldImg.offsetLeft + "px";
-      fieldCanvas.style.top = fieldImg.offsetTop + "px";
-    });
-
     fieldImg.addEventListener("click", (e) => {
       if (!isRunning) return;
-
       const rect = fieldImg.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-
-      const xRatio = clickX / rect.width;
-      const yRatio = clickY / rect.height;
-
+      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
+      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
       const dot = document.createElement("div");
       dot.className = "dot";
-      dot.style.left = `${xRatio * 100}%`;
-      dot.style.top = `${yRatio * 100}%`;
+      dot.style.left = `${x * 100}%`;
+      dot.style.top = `${y * 100}%`;
       field.appendChild(dot);
 
       const now = Date.now();
       const elapsed = now - startTime;
       const phase = inExtraTime ? "Extra Time" : isSecondHalf ? "2nd Half" : "1st Half";
-      logData.push({ time: formatTime(elapsed), x: xRatio.toFixed(4), y: yRatio.toFixed(4), phase });
+      logData.push({ time: formatTime(elapsed), x, y, phase });
 
-      const drawX = xRatio * fieldCanvas.width;
-      const drawY = yRatio * fieldCanvas.height;
+      // Draw on canvas
       ctx.beginPath();
-      ctx.arc(drawX, drawY, 5, 0, 2 * Math.PI);
+      ctx.arc(x * fieldCanvas.width, y * fieldCanvas.height, 5, 0, 2 * Math.PI);
       ctx.fillStyle = "red";
       ctx.fill();
     });
 
+    // Download the image with dots
     downloadImageBtn.addEventListener("click", () => {
       const image = fieldCanvas.toDataURL("image/png");
       const link = document.createElement("a");
@@ -252,8 +262,8 @@
         alert("No data to export.");
         return;
       }
-      const csvContent = "data:text/csv;charset=utf-8,"
-        + "Time,X,Y,Phase\n"
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + "Time,X,Y,Phase\n" 
         + logData.map(e => `${e.time},${e.x},${e.y},${e.phase}`).join("\n");
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
@@ -264,6 +274,5 @@
       document.body.removeChild(link);
     });
   </script>
-
 </body>
 </html>
