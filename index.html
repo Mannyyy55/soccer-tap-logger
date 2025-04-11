@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jogo Event Logger v5.6.3</title>
+  <title>Jogo Event Logger v5.6.4</title>
   <style>
     body {
       font-family: Helvetica, Arial, sans-serif;
@@ -17,11 +17,16 @@
       display: inline-block;
     }
 
+    #fieldImgWrapper {
+      position: relative;
+      display: inline-block;
+    }
+
     #field img {
       width: 1000px;
       height: auto;
       max-width: 100%;
-      cursor: crosshair;
+      display: block;
     }
 
     .dot {
@@ -65,19 +70,18 @@
       cursor: pointer;
     }
 
-    /* Active buttons (Download CSV and Download Image) will be grey */
     #downloadBtn:enabled, #downloadImageBtn:enabled {
       background-color: grey;
       color: white;
     }
 
     #downloadImageBtn {
-      margin-left: 10px; /* Add space between Download CSV and Download Image */
+      margin-left: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.3</h1>
+  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.4</h1>
 
   <div id="timer">00:00</div>
 
@@ -100,31 +104,32 @@
       <option value="45" selected>45 min</option>
     </select>
     <button id="downloadBtn">Download CSV</button>
-    <button id="downloadImageBtn">Download Image</button> <!-- New button for saving the image -->
+    <button id="downloadImageBtn">Download Image</button>
   </div>
 
   <div id="field">
-    <canvas id="fieldCanvas" width="1000" height="560"></canvas>
-    <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field"/>
+    <div id="fieldImgWrapper">
+      <canvas id="fieldCanvas" width="1000" height="560" style="position: absolute; top: 0; left: 0;"></canvas>
+      <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field"/>
+    </div>
   </div>
 
   <script>
     const timerDisplay = document.getElementById("timer");
-    const field = document.getElementById("field");
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
     const secondHalfBtn = document.getElementById("secondHalfBtn");
     const fullTimeBtn = document.getElementById("fullTimeBtn");
     const extraTimeBtn = document.getElementById("extraTimeBtn");
-    const fieldImg = document.getElementById("fieldImg");
     const halfDurationSelect = document.getElementById("halfDuration");
     const downloadBtn = document.getElementById("downloadBtn");
-    const downloadImageBtn = document.getElementById("downloadImageBtn"); // New download image button
+    const downloadImageBtn = document.getElementById("downloadImageBtn");
     const fieldCanvas = document.getElementById("fieldCanvas");
     const ctx = fieldCanvas.getContext("2d");
+    const fieldImg = document.getElementById("fieldImg");
+    const fieldWrapper = document.getElementById("fieldImgWrapper");
 
-    let startTime;
-    let timerInterval;
+    let startTime, timerInterval;
     let isRunning = false;
     let isSecondHalf = false;
     let selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
@@ -205,62 +210,44 @@
           clearInterval(timerInterval);
           isRunning = false;
           extraTimeBtn.textContent = "Resume";
-          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
         } else {
           startTime = Date.now() - parseTime(timerDisplay.textContent);
           timerInterval = setInterval(updateTimer, 500);
           isRunning = true;
           extraTimeBtn.textContent = "Pause";
-          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
         }
+        setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
       }
     });
 
     function parseTime(timeString) {
       const [min, sec] = timeString.split(":").map(Number);
-      return (parseInt(min) * 60 + parseInt(sec)) * 1000;
+      return (min * 60 + sec) * 1000;
     }
 
     fieldImg.addEventListener("click", (e) => {
-      // Ensure the red dot is only placed if the timer is running
-      if (!isRunning) return; 
+      if (!isRunning) return;
 
-      // Calculate the position where the dot should be placed
       const rect = fieldImg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width).toFixed(4); // Normalized X
-      const y = ((e.clientY - rect.top) / rect.height).toFixed(4); // Normalized Y
+      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
+      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
 
-      // Create the red dot element and append it to the field
+      // Add dot relative to image wrapper
       const dot = document.createElement("div");
       dot.className = "dot";
-      dot.style.left = `${x * 100}%`;  // Position dot relative to field width
-      dot.style.top = `${y * 100}%`;   // Position dot relative to field height
-      field.appendChild(dot);
+      dot.style.left = `${x * 100}%`;
+      dot.style.top = `${y * 100}%`;
+      fieldWrapper.appendChild(dot);
 
-      // Log the event with time and phase data
       const now = Date.now();
       const elapsed = now - startTime;
       const phase = inExtraTime ? "Extra Time" : isSecondHalf ? "2nd Half" : "1st Half";
       logData.push({ time: formatTime(elapsed), x, y, phase });
 
-      // Draw on canvas (fieldCanvas)
       ctx.beginPath();
       ctx.arc(x * fieldCanvas.width, y * fieldCanvas.height, 5, 0, 2 * Math.PI);
       ctx.fillStyle = "red";
       ctx.fill();
-    });
-
-    // Download the image with dots
-    downloadImageBtn.addEventListener("click", () => {
-      const image = fieldCanvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = "field_with_dots.png";
-      link.click();
-    });
-
-    halfDurationSelect.addEventListener("change", () => {
-      selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
     });
 
     downloadBtn.addEventListener("click", () => {
@@ -278,6 +265,18 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    });
+
+    downloadImageBtn.addEventListener("click", () => {
+      const image = fieldCanvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = "field_with_dots.png";
+      link.click();
+    });
+
+    halfDurationSelect.addEventListener("change", () => {
+      selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
     });
   </script>
 </body>
