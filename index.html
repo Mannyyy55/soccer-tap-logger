@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jogo Event Logger by Manny Martinez @ Cal Magic SC - v5.5.4</title>
+  <title>Jogo Event Logger v5.6</title>
   <style>
     body {
       font-family: Helvetica, Arial, sans-serif;
@@ -57,7 +57,7 @@
     .disabled { background-color: grey; cursor: not-allowed; }
     #timer { font-size: 24px; margin-bottom: 10px; }
 
-    select, #downloadBtn {
+    select, #downloadBtn, #downloadImageBtn {
       font-size: 14px;
       padding: 5px 10px;
       margin: 10px;
@@ -65,17 +65,13 @@
       cursor: pointer;
     }
 
-    #downloadBtn {
-      background-color: #007bff; /* Default blue color */
-    }
-
-    #downloadBtn:active {
-      background-color: #0056b3; /* Darker blue when clicked */
+    #downloadImageBtn {
+      margin-left: 10px; /* Add space between Download CSV and Download Image */
     }
   </style>
 </head>
 <body>
-  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC - v5.5.4</h1>
+  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6</h1>
 
   <div id="timer">00:00</div>
 
@@ -98,9 +94,11 @@
       <option value="45" selected>45 min</option>
     </select>
     <button id="downloadBtn">Download CSV</button>
+    <button id="downloadImageBtn">Download Image</button> <!-- New button for saving the image -->
   </div>
 
   <div id="field">
+    <canvas id="fieldCanvas" width="1000" height="560"></canvas>
     <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field"/>
   </div>
 
@@ -115,6 +113,9 @@
     const fieldImg = document.getElementById("fieldImg");
     const halfDurationSelect = document.getElementById("halfDuration");
     const downloadBtn = document.getElementById("downloadBtn");
+    const downloadImageBtn = document.getElementById("downloadImageBtn"); // New download image button
+    const fieldCanvas = document.getElementById("fieldCanvas");
+    const ctx = fieldCanvas.getContext("2d");
 
     let startTime;
     let timerInterval;
@@ -155,7 +156,7 @@
         startTime = Date.now();
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
-        setButtonStates(["stopBtn", "fullTimeBtn", "downloadBtn"]);
+        setButtonStates(["stopBtn", "fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
       }
     });
 
@@ -163,7 +164,7 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
-        setButtonStates(["secondHalfBtn", "downloadBtn"]);
+        setButtonStates(["secondHalfBtn", "downloadBtn", "downloadImageBtn"]);
       }
     });
 
@@ -173,7 +174,7 @@
         startTime = Date.now() - selectedHalfDuration;
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
-        setButtonStates(["fullTimeBtn", "downloadBtn"]);
+        setButtonStates(["fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
       }
     });
 
@@ -181,7 +182,7 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
-        setButtonStates(["extraTimeBtn", "downloadBtn"]);
+        setButtonStates(["extraTimeBtn", "downloadBtn", "downloadImageBtn"]);
       }
     });
 
@@ -192,19 +193,19 @@
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
         extraTimeBtn.textContent = "Pause";
-        setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn"]);
+        setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
       } else {
         if (isRunning) {
           clearInterval(timerInterval);
           isRunning = false;
           extraTimeBtn.textContent = "Resume";
-          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn"]);
+          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
         } else {
           startTime = Date.now() - parseTime(timerDisplay.textContent);
           timerInterval = setInterval(updateTimer, 500);
           isRunning = true;
           extraTimeBtn.textContent = "Pause";
-          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn"]);
+          setButtonStates(["extraTimeBtn", "fullTimeBtn", "downloadBtn", "downloadImageBtn"]);
         }
       }
     });
@@ -229,6 +230,21 @@
       const elapsed = now - startTime;
       const phase = inExtraTime ? "Extra Time" : isSecondHalf ? "2nd Half" : "1st Half";
       logData.push({ time: formatTime(elapsed), x, y, phase });
+
+      // Draw on canvas
+      ctx.beginPath();
+      ctx.arc(x * fieldCanvas.width, y * fieldCanvas.height, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = "red";
+      ctx.fill();
+    });
+
+    // Download the image with dots
+    downloadImageBtn.addEventListener("click", () => {
+      const image = fieldCanvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = "field_with_dots.png";
+      link.click();
     });
 
     halfDurationSelect.addEventListener("change", () => {
