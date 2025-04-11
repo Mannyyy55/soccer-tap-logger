@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jogo Event Logger v5.6</title>
+  <title>Jogo Event Logger v5.6.1</title>
   <style>
     body {
       font-family: Helvetica, Arial, sans-serif;
@@ -22,6 +22,9 @@
       height: auto;
       max-width: 100%;
       cursor: crosshair;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
 
     .dot {
@@ -71,7 +74,7 @@
   </style>
 </head>
 <body>
-  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6</h1>
+  <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC v5.6.1</h1>
 
   <div id="timer">00:00</div>
 
@@ -256,8 +259,8 @@
         alert("No data to export.");
         return;
       }
-      const csvContent = "data:text/csv;charset=utf-8,"
-        + "Time,X,Y,Phase\n"
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + "Time,X,Y,Phase\n" 
         + logData.map(e => `${e.time},${e.x},${e.y},${e.phase}`).join("\n");
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
