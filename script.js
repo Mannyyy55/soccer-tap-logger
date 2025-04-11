@@ -1,12 +1,17 @@
 const timerDisplay = document.getElementById("timer");
 const field = document.getElementById("field");
 const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
+const halfTimeBtn = document.getElementById("halfTimeBtn");
+const fullTimeBtn = document.getElementById("fullTimeBtn");
+const extraTimeBtn = document.getElementById("extraTimeBtn");
+const endMatchBtn = document.getElementById("endMatchBtn");
 const fieldImg = document.getElementById("fieldImg");
 
 let startTime;
 let timerInterval;
 let isRunning = false;
+let isFirstHalf = true;
+let isExtraTime = false;
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -26,20 +31,44 @@ startBtn.addEventListener("click", () => {
     startTime = Date.now();
     timerInterval = setInterval(updateTimer, 500);
     isRunning = true;
-    stopBtn.disabled = false;
-    stopBtn.classList.remove("disabled");
-    startBtn.classList.add("disabled");
     startBtn.disabled = true;
+    halfTimeBtn.disabled = false;
+    halfTimeBtn.classList.remove("disabled");
   }
 });
 
-stopBtn.addEventListener("click", () => {
-  if (isRunning) {
+halfTimeBtn.addEventListener("click", () => {
+  if (isRunning && isFirstHalf) {
     clearInterval(timerInterval);
     isRunning = false;
-    stopBtn.classList.add("disabled");
-    stopBtn.disabled = true;
+    halfTimeBtn.disabled = true;
+    fullTimeBtn.disabled = false;
+    fullTimeBtn.classList.remove("disabled");
+    isFirstHalf = false;
   }
+});
+
+fullTimeBtn.addEventListener("click", () => {
+  if (!isRunning && !isFirstHalf) {
+    fullTimeBtn.textContent = "Confirm End";
+    extraTimeBtn.disabled = false;
+    extraTimeBtn.classList.remove("disabled");
+  }
+});
+
+extraTimeBtn.addEventListener("click", () => {
+  if (!isRunning && !isFirstHalf && fullTimeBtn.textContent === "Confirm End") {
+    isExtraTime = true;
+    fullTimeBtn.textContent = "Full Time";
+    extraTimeBtn.disabled = true;
+    startBtn.disabled = false;
+    startBtn.classList.remove("disabled");
+  }
+});
+
+endMatchBtn.addEventListener("click", () => {
+  alert("Match has ended!");
+  window.location.reload();
 });
 
 fieldImg.addEventListener("click", (e) => {
@@ -53,4 +82,3 @@ fieldImg.addEventListener("click", (e) => {
   dot.style.top = `${y * 100}%`;
   field.appendChild(dot);
 });
-
