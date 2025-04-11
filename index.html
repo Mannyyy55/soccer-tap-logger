@@ -55,6 +55,7 @@
 
     .start { background-color: green; }
     .disabled { background-color: grey; cursor: not-allowed; }
+    .active { background-color: green !important; }
     #timer { font-size: 24px; margin-bottom: 10px; }
 
     select, #downloadBtn {
@@ -114,6 +115,8 @@
     let isSecondHalf = false;
     let selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
     let logData = [];
+    let currentPhase = "1st Half";
+    let elapsedExtraTime = 0;
 
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
@@ -128,17 +131,27 @@
       timerDisplay.textContent = formatTime(elapsed);
     }
 
+    function disableButtons() {
+      [startBtn, stopBtn, secondHalfBtn, fullTimeBtn, extraTimeBtn].forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add("disabled");
+        btn.classList.remove("active");
+      });
+    }
+
     startBtn.addEventListener("click", () => {
       if (!isRunning) {
         startTime = Date.now();
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
+        currentPhase = "1st Half";
+        disableButtons();
         stopBtn.disabled = false;
         stopBtn.classList.remove("disabled");
-        startBtn.classList.add("disabled");
-        startBtn.disabled = true;
-        secondHalfBtn.disabled = false;
-        secondHalfBtn.classList.remove("disabled");
+        stopBtn.classList.add("active");
+        fullTimeBtn.disabled = false;
+        fullTimeBtn.classList.remove("disabled");
+        fullTimeBtn.classList.add("active");
       }
     });
 
@@ -146,8 +159,10 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
-        stopBtn.classList.add("disabled");
-        stopBtn.disabled = true;
+        disableButtons();
+        secondHalfBtn.disabled = false;
+        secondHalfBtn.classList.remove("disabled");
+        secondHalfBtn.classList.add("active");
       }
     });
 
@@ -157,10 +172,11 @@
         startTime = Date.now() - selectedHalfDuration;
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
-        secondHalfBtn.classList.add("disabled");
-        secondHalfBtn.disabled = true;
+        currentPhase = "2nd Half";
+        disableButtons();
         fullTimeBtn.disabled = false;
         fullTimeBtn.classList.remove("disabled");
+        fullTimeBtn.classList.add("active");
       }
     });
 
@@ -168,15 +184,34 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
-        fullTimeBtn.classList.add("disabled");
-        fullTimeBtn.disabled = true;
       }
+      disableButtons();
+      extraTimeBtn.disabled = false;
+      extraTimeBtn.classList.remove("disabled");
+      extraTimeBtn.classList.add("active");
     });
 
     extraTimeBtn.addEventListener("click", () => {
-      if (isRunning) {
+      if (extraTimeBtn.textContent === "Extra Time" || extraTimeBtn.textContent === "Resume") {
+        if (!isRunning) {
+          startTime = Date.now() - elapsedExtraTime;
+          timerInterval = setInterval(updateTimer, 500);
+          isRunning = true;
+        }
+        currentPhase = "Extra Time";
+        extraTimeBtn.textContent = "Pause";
+        disableButtons();
+        extraTimeBtn.disabled = false;
+        extraTimeBtn.classList.remove("disabled");
+        extraTimeBtn.classList.add("active");
+        fullTimeBtn.disabled = false;
+        fullTimeBtn.classList.remove("disabled");
+        fullTimeBtn.classList.add("active");
+      } else if (extraTimeBtn.textContent === "Pause") {
         clearInterval(timerInterval);
         isRunning = false;
+        elapsedExtraTime = Date.now() - startTime;
+        extraTimeBtn.textContent = "Resume";
       }
     });
 
@@ -193,8 +228,7 @@
 
       const now = Date.now();
       const elapsed = now - startTime;
-      const phase = isSecondHalf ? "2nd Half" : "1st Half";
-      logData.push({ time: formatTime(elapsed), x, y, phase });
+      logData.push({ time: formatTime(elapsed), x, y, phase: currentPhase });
     });
 
     halfDurationSelect.addEventListener("change", () => {
