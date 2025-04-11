@@ -58,6 +58,18 @@
       background-color: green;
     }
 
+    .half-time {
+      background-color: blue;
+    }
+
+    .full-time {
+      background-color: orange;
+    }
+
+    .extra-time {
+      background-color: purple;
+    }
+
     .disabled {
       background-color: grey;
       cursor: not-allowed;
@@ -74,7 +86,10 @@
   <div id="timer">00:00</div>
   <div class="controls">
     <button id="startBtn" class="control-button start">Start</button>
-    <button id="stopBtn" class="control-button disabled" disabled>Half Time</button>
+    <button id="halfTimeBtn" class="control-button half-time disabled" disabled>Half Time</button>
+    <button id="fullTimeBtn" class="control-button full-time disabled" disabled>Full Time</button>
+    <button id="extraTimeBtn" class="control-button extra-time disabled" disabled>Extra Time</button>
+    <button id="endMatchBtn" class="control-button disabled" disabled>End Match</button>
   </div>
   <div id="field">
     <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field" />
@@ -84,12 +99,17 @@
     const timerDisplay = document.getElementById("timer");
     const field = document.getElementById("field");
     const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
+    const halfTimeBtn = document.getElementById("halfTimeBtn");
+    const fullTimeBtn = document.getElementById("fullTimeBtn");
+    const extraTimeBtn = document.getElementById("extraTimeBtn");
+    const endMatchBtn = document.getElementById("endMatchBtn");
     const fieldImg = document.getElementById("fieldImg");
 
     let startTime;
     let timerInterval;
     let isRunning = false;
+    let isFirstHalf = true;
+    let isExtraTime = false;
 
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
@@ -109,20 +129,44 @@
         startTime = Date.now();
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
-        stopBtn.disabled = false;
-        stopBtn.classList.remove("disabled");
-        startBtn.classList.add("disabled");
         startBtn.disabled = true;
+        halfTimeBtn.disabled = false;
+        halfTimeBtn.classList.remove("disabled");
       }
     });
 
-    stopBtn.addEventListener("click", () => {
-      if (isRunning) {
+    halfTimeBtn.addEventListener("click", () => {
+      if (isRunning && isFirstHalf) {
         clearInterval(timerInterval);
         isRunning = false;
-        stopBtn.classList.add("disabled");
-        stopBtn.disabled = true;
+        halfTimeBtn.disabled = true;
+        fullTimeBtn.disabled = false;
+        fullTimeBtn.classList.remove("disabled");
+        isFirstHalf = false;
       }
+    });
+
+    fullTimeBtn.addEventListener("click", () => {
+      if (!isRunning && !isFirstHalf) {
+        fullTimeBtn.textContent = "Confirm End";
+        extraTimeBtn.disabled = false;
+        extraTimeBtn.classList.remove("disabled");
+      }
+    });
+
+    extraTimeBtn.addEventListener("click", () => {
+      if (!isRunning && !isFirstHalf && fullTimeBtn.textContent === "Confirm End") {
+        isExtraTime = true;
+        fullTimeBtn.textContent = "Full Time";
+        extraTimeBtn.disabled = true;
+        startBtn.disabled = false;
+        startBtn.classList.remove("disabled");
+      }
+    });
+
+    endMatchBtn.addEventListener("click", () => {
+      alert("Match has ended!");
+      window.location.reload();
     });
 
     fieldImg.addEventListener("click", (e) => {
