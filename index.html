@@ -8,25 +8,25 @@
 </head>
 <body>
   <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC</h1>
+  <div>
+    <label for="halfDuration">Half Duration (min): </label>
+    <select id="halfDuration">
+      <option value="20">20</option>
+      <option value="25">25</option>
+      <option value="30">30</option>
+      <option value="35">35</option>
+      <option value="40">40</option>
+      <option value="45" selected>45</option>
+    </select>
+  </div>
   <div id="timer">00:00</div>
-
-  <label for="halfDuration">Half Duration:</label>
-  <select id="halfDuration">
-    <option value="20">20 min</option>
-    <option value="25">25 min</option>
-    <option value="30">30 min</option>
-    <option value="35">35 min</option>
-    <option value="40">40 min</option>
-    <option value="45" selected>45 min</option>
-  </select>
-
   <div class="controls">
     <button id="startBtn" class="control-button start">Start</button>
-    <button id="halfBtn" class="control-button disabled" disabled>Half Time</button>
+    <button id="halfTimeBtn" class="control-button disabled" disabled>Half Time</button>
     <button id="secondHalfBtn" class="control-button disabled" disabled>2nd Half</button>
     <button id="extraTimeBtn" class="control-button disabled" disabled>Extra Time</button>
     <button id="fullTimeBtn" class="control-button disabled" disabled>Full Time</button>
-    <button id="downloadCsvBtn" class="control-button download">Download CSV</button>
+    <button id="downloadBtn" class="control-button">Download CSV</button>
   </div>
 
   <div id="field">
