@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,14 +9,16 @@
       font-family: Helvetica, Arial, sans-serif;
       text-align: center;
       background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
     }
 
     #field {
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
-  position: relative;
-}
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      position: relative;
+    }
 
     #field img {
       width: 1000px;
@@ -34,7 +33,6 @@
       height: 10px;
       background-color: red;
       border-radius: 50%;
-      transform: translate(-50%, -50%);
       pointer-events: none;
     }
 
@@ -84,7 +82,6 @@
   
   <div id="timer">00:00</div>
 
-  <!-- Controls -->
   <div class="controls">
     <button id="startBtn" class="control-button start">Start</button>
     <button id="stopBtn" class="control-button disabled" disabled>Half Time</button>
@@ -124,7 +121,7 @@
     let timerInterval;
     let isRunning = false;
     let isSecondHalf = false;
-    let selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000; // in milliseconds
+    let selectedHalfDuration = parseInt(halfDurationSelect.value) * 60 * 1000;
 
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
@@ -165,8 +162,7 @@
     secondHalfBtn.addEventListener("click", () => {
       if (!isRunning && !isSecondHalf) {
         isSecondHalf = true;
-        const secondHalfStartTime = Date.now() - selectedHalfDuration; // Start second half from the selected duration
-        startTime = secondHalfStartTime;
+        startTime = Date.now() - selectedHalfDuration;
         timerInterval = setInterval(updateTimer, 500);
         isRunning = true;
         secondHalfBtn.classList.add("disabled");
@@ -189,19 +185,20 @@
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
-        // Additional functionality for Extra Time can be added here
       }
     });
 
     fieldImg.addEventListener("click", (e) => {
       if (!isRunning) return;
+
       const rect = fieldImg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
-      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
       const dot = document.createElement("div");
       dot.className = "dot";
-      dot.style.left = `${x * 100}%`;
-      dot.style.top = `${y * 100}%`;
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
       field.appendChild(dot);
     });
 
