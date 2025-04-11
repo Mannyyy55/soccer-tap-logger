@@ -1,19 +1,19 @@
 const timerDisplay = document.getElementById("timer");
 const field = document.getElementById("field");
 const fieldImg = document.getElementById("fieldImg");
-
 const startBtn = document.getElementById("startBtn");
-const halfBtn = document.getElementById("halfBtn");
+const halfTimeBtn = document.getElementById("halfTimeBtn");
 const secondHalfBtn = document.getElementById("secondHalfBtn");
-const extraTimeBtn = document.getElementById("extraTimeBtn");
 const fullTimeBtn = document.getElementById("fullTimeBtn");
-const downloadCsvBtn = document.getElementById("downloadCsvBtn");
+const extraTimeBtn = document.getElementById("extraTimeBtn");
+const downloadBtn = document.getElementById("downloadBtn");
 const halfDurationSelect = document.getElementById("halfDuration");
 
-let startTime, timerInterval;
+let startTime;
+let offset = 0;
+let timerInterval;
 let isRunning = false;
-let csvData = [["Time", "X", "Y", "Phase"]];
-let currentPhase = "1st Half";
+let events = [];
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -24,79 +24,99 @@ function formatTime(ms) {
 
 function updateTimer() {
   const now = Date.now();
-  const elapsed = now - startTime;
+  const elapsed = now - startTime + offset;
   timerDisplay.textContent = formatTime(elapsed);
 }
 
-function startClock(phaseName) {
+function enable(button) {
+  button.disabled = false;
+  button.classList.remove("disabled");
+}
+
+function disable(button) {
+  button.disabled = true;
+  button.classList.add("disabled");
+}
+
+function getCurrentTime() {
+  const now = Date.now();
+  return now - startTime + offset;
+}
+
+function startTimer() {
   startTime = Date.now();
   timerInterval = setInterval(updateTimer, 500);
   isRunning = true;
-  currentPhase = phaseName;
 }
 
-function stopClock() {
+function stopTimer() {
   clearInterval(timerInterval);
+  offset += Date.now() - startTime;
   isRunning = false;
 }
 
-function toggleButtons(disableList = [], enableList = []) {
-  disableList.forEach(btn => {
-    btn.disabled = true;
-    btn.classList.add("disabled");
-  });
-  enableList.forEach(btn => {
-    btn.disabled = false;
-    btn.classList.remove("disabled");
-  });
-}
-
 startBtn.addEventListener("click", () => {
-  startClock("1st Half");
-  toggleButtons([startBtn], [halfBtn]);
+  startTimer();
+  disable(startBtn);
+  enable(halfTimeBtn);
 });
 
-halfBtn.addEventListener("click", () => {
-  stopClock();
-  toggleButtons([halfBtn], [secondHalfBtn]);
+halfTimeBtn.addEventListener("click", () => {
+  stopTimer();
+  disable(halfTimeBtn);
+  enable(secondHalfBtn);
+  enable(extraTimeBtn);
 });
 
 secondHalfBtn.addEventListener("click", () => {
-  startClock("2nd Half");
-  toggleButtons([secondHalfBtn], [fullTimeBtn, extraTimeBtn]);
+  const halfDuration = parseInt(halfDurationSelect.value, 10);
+  offset = halfDuration * 60 * 1000;
+  startTimer();
+  disable(secondHalfBtn);
+  enable(fullTimeBtn);
 });
 
 extraTimeBtn.addEventListener("click", () => {
-  startClock("Extra Time");
-  toggleButtons([extraTimeBtn], [fullTimeBtn]);
+  offset += getCurrentTime();
+  startTimer();
+  disable(extraTimeBtn);
+  enable(fullTimeBtn);
 });
 
 fullTimeBtn.addEventListener("click", () => {
-  stopClock();
-  toggleButtons([fullTimeBtn], []);
+  stopTimer();
+  disable(fullTimeBtn);
 });
 
 fieldImg.addEventListener("click", (e) => {
   if (!isRunning) return;
+
   const rect = fieldImg.getBoundingClientRect();
   const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
   const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
+  const time = formatTime(getCurrentTime());
+
   const dot = document.createElement("div");
   dot.className = "dot";
   dot.style.left = `${x * 100}%`;
   dot.style.top = `${y * 100}%`;
   field.appendChild(dot);
 
-  const timestamp = timerDisplay.textContent;
-  csvData.push([timestamp, x, y, currentPhase]);
+  events.push({ time, x, y });
 });
 
-downloadCsvBtn.addEventListener("click", () => {
-  let csvContent = "data:text/csv;charset=utf-8," + csvData.map(e => e.join(",")).join("\n");
+downloadBtn.addEventListener("click", () => {
+  if (events.length === 0) return;
+
+  let csvContent = "data:text/csv;charset=utf-8,Time,X,Y\n";
+  events.forEach(e => {
+    csvContent += `${e.time},${e.x},${e.y}\n`;
+  });
+
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "soccer_log.csv");
+  link.setAttribute("download", "event_log.csv");
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
