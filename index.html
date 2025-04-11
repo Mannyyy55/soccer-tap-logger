@@ -5,181 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Soccer Logger</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f4f4f4;
-    }
-
-    #field {
-      position: relative;
-      display: inline-block;
-      margin: 20px 0;
-    }
-
-    #field img {
-      width: 1000px;
-      height: auto;
-      max-width: 100%;
-      cursor: crosshair;
-    }
-
-    .dot {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background-color: red;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    .controls {
-      margin: 10px auto;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .control-button {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      border: none;
-      color: white;
-      font-size: 14px;
-      margin: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    .start {
-      background-color: green;
-    }
-
-    .half-time {
-      background-color: blue;
-    }
-
-    .full-time {
-      background-color: orange;
-    }
-
-    .extra-time {
-      background-color: purple;
-    }
-
-    .disabled {
-      background-color: grey;
-      cursor: not-allowed;
-    }
-
-    #timer {
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-  </style>
 </head>
 <body>
   <h1>Jogo Event Logger by Manny Martinez @ Cal Magic SC</h1>
   <div id="timer">00:00</div>
+
+  <label for="halfDuration">Half Duration:</label>
+  <select id="halfDuration">
+    <option value="20">20 min</option>
+    <option value="25">25 min</option>
+    <option value="30">30 min</option>
+    <option value="35">35 min</option>
+    <option value="40">40 min</option>
+    <option value="45" selected>45 min</option>
+  </select>
+
   <div class="controls">
     <button id="startBtn" class="control-button start">Start</button>
-    <button id="halfTimeBtn" class="control-button half-time disabled" disabled>Half Time</button>
-    <button id="fullTimeBtn" class="control-button full-time disabled" disabled>Full Time</button>
-    <button id="extraTimeBtn" class="control-button extra-time disabled" disabled>Extra Time</button>
-    <button id="endMatchBtn" class="control-button disabled" disabled>End Match</button>
+    <button id="halfBtn" class="control-button disabled" disabled>Half Time</button>
+    <button id="secondHalfBtn" class="control-button disabled" disabled>2nd Half</button>
+    <button id="extraTimeBtn" class="control-button disabled" disabled>Extra Time</button>
+    <button id="fullTimeBtn" class="control-button disabled" disabled>Full Time</button>
+    <button id="downloadCsvBtn" class="control-button download">Download CSV</button>
   </div>
+
   <div id="field">
     <img src="https://raw.githubusercontent.com/Mannyyy55/soccer-tap-logger/main/field.png" id="fieldImg" alt="Soccer Field" />
   </div>
 
-  <script>
-    const timerDisplay = document.getElementById("timer");
-    const field = document.getElementById("field");
-    const startBtn = document.getElementById("startBtn");
-    const halfTimeBtn = document.getElementById("halfTimeBtn");
-    const fullTimeBtn = document.getElementById("fullTimeBtn");
-    const extraTimeBtn = document.getElementById("extraTimeBtn");
-    const endMatchBtn = document.getElementById("endMatchBtn");
-    const fieldImg = document.getElementById("fieldImg");
-
-    let startTime;
-    let timerInterval;
-    let isRunning = false;
-    let isFirstHalf = true;
-    let isExtraTime = false;
-
-    function formatTime(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-      const seconds = String(totalSeconds % 60).padStart(2, "0");
-      return `${minutes}:${seconds}`;
-    }
-
-    function updateTimer() {
-      const now = Date.now();
-      const elapsed = now - startTime;
-      timerDisplay.textContent = formatTime(elapsed);
-    }
-
-    startBtn.addEventListener("click", () => {
-      if (!isRunning) {
-        startTime = Date.now();
-        timerInterval = setInterval(updateTimer, 500);
-        isRunning = true;
-        startBtn.disabled = true;
-        halfTimeBtn.disabled = false;
-        halfTimeBtn.classList.remove("disabled");
-      }
-    });
-
-    halfTimeBtn.addEventListener("click", () => {
-      if (isRunning && isFirstHalf) {
-        clearInterval(timerInterval);
-        isRunning = false;
-        halfTimeBtn.disabled = true;
-        fullTimeBtn.disabled = false;
-        fullTimeBtn.classList.remove("disabled");
-        isFirstHalf = false;
-      }
-    });
-
-    fullTimeBtn.addEventListener("click", () => {
-      if (!isRunning && !isFirstHalf) {
-        fullTimeBtn.textContent = "Confirm End";
-        extraTimeBtn.disabled = false;
-        extraTimeBtn.classList.remove("disabled");
-      }
-    });
-
-    extraTimeBtn.addEventListener("click", () => {
-      if (!isRunning && !isFirstHalf && fullTimeBtn.textContent === "Confirm End") {
-        isExtraTime = true;
-        fullTimeBtn.textContent = "Full Time";
-        extraTimeBtn.disabled = true;
-        startBtn.disabled = false;
-        startBtn.classList.remove("disabled");
-      }
-    });
-
-    endMatchBtn.addEventListener("click", () => {
-      alert("Match has ended!");
-      window.location.reload();
-    });
-
-    fieldImg.addEventListener("click", (e) => {
-      if (!isRunning) return;
-      const rect = fieldImg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width).toFixed(4);
-      const y = ((e.clientY - rect.top) / rect.height).toFixed(4);
-      const dot = document.createElement("div");
-      dot.className = "dot";
-      dot.style.left = `${x * 100}%`;
-      dot.style.top = `${y * 100}%`;
-      field.appendChild(dot);
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
